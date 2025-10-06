@@ -1,0 +1,11 @@
+# Set default behavior to automatically normalize line endings
+* text=auto
+
+# Ensure common source files use LF in the repo and are checked out with native line endings
+*.rs text eol=lf
+*.toml text eol=lf
+*.md text eol=lf
+
+# Treat build artifacts as binary to prevent CRLF/LF warnings
+/automate_engine/target/** -text
+/target/** -text

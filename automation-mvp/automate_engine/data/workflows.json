@@ -1,0 +1,39 @@
+[
+  {
+    "nodes": [
+      {
+        "config": {
+          "url": "https://api.github.com"
+        },
+        "type": "http"
+      }
+    ]
+  },
+  {
+    "nodes": [
+      {
+        "config": {
+          "headers": {
+            "User-Agent": "automation-mvp/1.0"
+          },
+          "method": "GET",
+          "url": "https://api.github.com"
+        },
+        "type": "http"
+      }
+    ]
+  },
+  {
+    "nodes": [
+      {
+        "config": {
+          "headers": {
+            "User-Agent": "automation-dashboard/1.0"
+          },
+          "url": "https://api.github.com"
+        },
+        "type": "http"
+      }
+    ]
+  }
+]

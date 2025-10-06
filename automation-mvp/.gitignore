@@ -1,0 +1,24 @@
+# Ignore Rust/Cargo build outputs and common generated files
+# Ignore target directories recursively
+/target/
+**/target/
+/automate_engine/target/
+
+# Ignore compiled artifacts
+*.rlib
+*.rmeta
+*.d
+*.dll
+*.exe
+*.pdb
+*.so
+*.dylib
+
+# Ignore editor and OS files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Keep workspace-specific lock files as desired (uncomment if you want to track Cargo.lock for apps)
+# /Cargo.lock
