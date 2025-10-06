@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "reactflow": "^11.11.4",
+    "uuid": "^13.0.0"
+  }
+}
