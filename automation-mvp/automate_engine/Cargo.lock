@@ -114,6 +114,7 @@ dependencies = [
  "async-trait",
  "axum",
  "chrono",
+ "dotenvy",
  "http",
  "reqwest",
  "serde",
@@ -121,6 +122,7 @@ dependencies = [
  "sqlx",
  "tokio",
  "tokio-stream",
+ "tower-http",
  "uuid",
 ]
 
@@ -1804,6 +1806,7 @@ dependencies = [
  "tokio-stream",
  "tracing",
  "url",
+ "uuid",
 ]
 
 [[package]]
@@ -1885,6 +1888,7 @@ dependencies = [
  "stringprep",
  "thiserror",
  "tracing",
+ "uuid",
  "whoami",
 ]
 
@@ -1924,6 +1928,7 @@ dependencies = [
  "stringprep",
  "thiserror",
  "tracing",
+ "uuid",
  "whoami",
 ]
 
@@ -1949,6 +1954,7 @@ dependencies = [
  "tracing",
  "url",
  "urlencoding",
+ "uuid",
 ]
 
 [[package]]
