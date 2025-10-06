@@ -14,20 +14,25 @@ export default function App() {
   const [runs, setRuns] = useState<RunLog[]>([]);
   const [url, setUrl] = useState("");
 
-  // ✅ Load initial workflows and runs
+  // ✅ Load initial data
   useEffect(() => {
-    getWorkflows().then((res) => setWorkflows(res.data.workflows || []));
-    getRuns().then((res) => setRuns(res.data.runs || []));
+    getWorkflows()
+      .then((res) => setWorkflows(res.data.workflows || []))
+      .catch((err) => console.error("Failed to fetch workflows:", err));
+
+    getRuns()
+      .then((res) => setRuns(res.data.runs || []))
+      .catch((err) => console.error("Failed to fetch runs:", err));
   }, []);
 
-  // ✅ Connect to Server-Sent Events (real-time updates)
+  // ✅ Connect to SSE for live updates
   useEffect(() => {
     const sse = new EventSource("http://localhost:3000/events");
 
     sse.onmessage = (e) => {
       try {
         const data = JSON.parse(e.data);
-        console.log("🔥 Live runs update:", data);
+        console.log("🔥 Live SSE update:", data);
         setRuns(data);
       } catch (err) {
         console.error("Failed to parse SSE data:", err, e.data);
@@ -42,36 +47,46 @@ export default function App() {
     return () => sse.close();
   }, []);
 
-  // ✅ Auto-scroll to bottom when runs update
+  // ✅ Auto-scroll live runs
   useEffect(() => {
     const container = document.getElementById("runs-container");
     if (container) container.scrollTop = container.scrollHeight;
   }, [runs]);
 
+  // ✅ Run workflow
   const handleRun = async (id: number) => {
     console.log(`▶️ Running workflow ${id}`);
-    await runWorkflow(id);
+    try {
+      await runWorkflow(id);
+    } catch (err) {
+      console.error("Failed to run workflow:", err);
+    }
   };
 
+  // ✅ Add workflow
   const handleAddWorkflow = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!url.trim()) return;
 
-    await saveWorkflow({
-      nodes: [
-        {
-          type: "http",
-          config: {
-            url,
-            headers: { "User-Agent": "automation-dashboard/1.0" },
+    try {
+      await saveWorkflow({
+        nodes: [
+          {
+            type: "http",
+            config: {
+              url,
+              headers: { "User-Agent": "automation-dashboard/1.0" },
+            },
           },
-        },
-      ],
-    });
+        ],
+      });
 
-    const wf = await getWorkflows();
-    setWorkflows(wf.data.workflows);
-    setUrl("");
+      const wf = await getWorkflows();
+      setWorkflows(wf.data.workflows);
+      setUrl("");
+    } catch (err) {
+      console.error("Failed to save workflow:", err);
+    }
   };
 
   return (
@@ -98,26 +113,34 @@ export default function App() {
         {workflows.length === 0 ? (
           <div className="text-gray-500">No workflows added yet.</div>
         ) : (
-          workflows.map((wf, i) => (
-            <div
-              key={i}
-              className="flex justify-between items-center py-2 border-b last:border-0"
-            >
-              <div>
-                <span className="font-mono text-sm text-gray-600">
-                  Workflow {i}
-                </span>
-                : {wf.nodes[0]?.config?.url}
-              </div>
-              <button
-                onClick={() => handleRun(i)}
-                className="flex items-center gap-1 bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
+          workflows.map((wf, i) => {
+            // ✅ Handle both Postgres + JSON structures
+            const url =
+              wf?.nodes?.[0]?.config?.url ||
+              wf?.data?.nodes?.[0]?.config?.url ||
+              "(no URL)";
+
+            return (
+              <div
+                key={wf.id ?? i}
+                className="flex justify-between items-center py-2 border-b last:border-0"
               >
-                <PlayIcon className="h-5 w-5" />
-                Run
-              </button>
-            </div>
-          ))
+                <div>
+                  <span className="font-mono text-sm text-gray-600">
+                    Workflow {wf.id ?? i}
+                  </span>
+                  : {url}
+                </div>
+                <button
+                  onClick={() => handleRun(wf.id ?? i)}
+                  className="flex items-center gap-1 bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
+                >
+                  <PlayIcon className="h-5 w-5" />
+                  Run
+                </button>
+              </div>
+            );
+          })
         )}
       </div>
 
@@ -139,7 +162,7 @@ export default function App() {
                   r.status === "success" ? "text-green-400" : "text-red-400"
                 }
               >
-                {r.status.toUpperCase()}
+                {r.status?.toUpperCase?.() ?? "UNKNOWN"}
               </span>
             </div>
           ))
