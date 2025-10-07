@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useState } from "react";
 import ReactFlow, {
   addEdge,
   useNodesState,
@@ -6,74 +6,61 @@ import ReactFlow, {
   MiniMap,
   Controls,
   Background,
-  type Connection,
-  type Edge,
-  type Node,
+  Handle,
+  Position,
 } from "reactflow";
+import type { Connection, Edge, Node } from "reactflow";
+
 import "reactflow/dist/style.css";
 
-interface WorkflowBuilderProps {
-  onSave: (workflow: any) => Promise<void>;
-}
-
-export default function WorkflowBuilder({ onSave }: WorkflowBuilderProps) {
+export default function WorkflowBuilder({ onSave }: { onSave: (workflow: any) => void }) {
   const [nodes, setNodes, onNodesChange] = useNodesState([
     {
       id: "1",
-      type: "default",
-      position: { x: 250, y: 5 },
-      data: { label: "🌐 HTTP Request Node" },
+      type: "httpNode",
+      position: { x: 200, y: 50 },
+      data: { label: "HTTP Request", url: "https://api.github.com" },
     },
   ]);
-
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
 
-  // ✅ Add new connection between nodes
   const onConnect = useCallback(
-    (params: Edge | Connection) => setEdges((eds) => addEdge(params, eds)),
-    [setEdges]
-  );
+  (params: Edge | Connection) =>
+    setEdges((eds: Edge[]) => addEdge(params, eds)),
+  [setEdges]
+);
 
-  // ✅ Add new node
+
   const addNewNode = useCallback(() => {
-    setNodes((nds) => {
-      const id = (nds.length + 1).toString();
-      const newNode: Node = {
-        id,
-        type: "default",
-        position: { x: 150 + nds.length * 50, y: 100 + nds.length * 50 },
-        data: { label: `🧩 Node ${id}` },
-      };
-      return [...nds, newNode];
-    });
+   setNodes((nds: Node[]) => {
+  const id = (nds.length + 1).toString();
+  const newNode: Node = {
+    id,
+    type: "httpNode",
+    position: { x: 200 + nds.length * 50, y: 150 + nds.length * 50 },
+    data: { label: `HTTP Node ${id}`, url: "" },
+  };
+  return [...nds, newNode];
+});
+
   }, [setNodes]);
 
-  // ✅ Save workflow
-  const handleSaveClick = async () => {
-    const workflow = { nodes, edges };
-
-    try {
-      const response = await fetch("http://localhost:3000/workflow", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(workflow),
-      });
-
-      if (!response.ok) throw new Error("Failed to save workflow");
-      const data = await response.json();
-      alert("✅ Workflow saved successfully!");
-      onSave(data);
-    } catch (err) {
-      console.error("❌ Error saving workflow:", err);
-      alert("Failed to save workflow. Check console.");
-    }
+  const handleSave = () => {
+    const workflow = {
+      nodes: nodes.map((n) => ({
+        type: "http",
+        config: { url: n.data.url || "" },
+      })),
+      edges,
+    };
+    onSave(workflow);
   };
 
   return (
     <div className="h-screen w-full bg-gray-50">
       <div className="p-3 bg-white border-b shadow-sm flex justify-between items-center">
         <h2 className="text-lg font-semibold">🧩 Workflow Builder</h2>
-        <div className="flex gap-3">
+        <div className="flex gap-2">
           <button
             onClick={addNewNode}
             className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
@@ -81,7 +68,7 @@ export default function WorkflowBuilder({ onSave }: WorkflowBuilderProps) {
             ➕ Add Node
           </button>
           <button
-            onClick={handleSaveClick}
+            onClick={handleSave}
             className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
           >
             💾 Save Workflow
@@ -97,11 +84,30 @@ export default function WorkflowBuilder({ onSave }: WorkflowBuilderProps) {
         onConnect={onConnect}
         fitView
         style={{ background: "#f8fafc" }}
+        nodeTypes={{ httpNode: HttpNode }}
       >
         <MiniMap />
         <Controls />
         <Background gap={12} size={1} color="#ddd" />
       </ReactFlow>
+    </div>
+  );
+}
+
+// ✅ Custom node component with editable URL
+function HttpNode({ data }: any) {
+  return (
+    <div className="bg-white border border-gray-300 rounded-md shadow p-2 w-56">
+      <div className="font-bold mb-1 text-sm">🌐 {data.label}</div>
+      <input
+        type="text"
+        value={data.url}
+        onChange={(e) => (data.url = e.target.value)}
+        placeholder="Enter URL"
+        className="border w-full rounded px-2 py-1 text-sm"
+      />
+      <Handle type="target" position={Position.Top} />
+      <Handle type="source" position={Position.Bottom} />
     </div>
   );
 }
